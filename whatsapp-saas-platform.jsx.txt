@@ -1,0 +1,1413 @@
+import { useState, useEffect, useRef } from "react";
+
+// ============================================================
+// DESIGN SYSTEM
+// ============================================================
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --bg4: #22222f;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f8;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --accent: #25d366;
+    --accent2: #128c7e;
+    --accentGlow: rgba(37,211,102,0.15);
+    --purple: #7c5cfc;
+    --purpleGlow: rgba(124,92,252,0.15);
+    --orange: #ff6b35;
+    --yellow: #ffd93d;
+    --red: #ff4757;
+    --blue: #4a90d9;
+    --radius: 14px;
+    --radius2: 20px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadowAccent: 0 0 30px rgba(37,211,102,0.2);
+    --font: 'DM Sans', sans-serif;
+    --fontDisplay: 'Syne', sans-serif;
+    --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  .light {
+    --bg: #f4f4f8;
+    --bg2: #ffffff;
+    --bg3: #eeeef5;
+    --bg4: #e5e5ef;
+    --border: rgba(0,0,0,0.07);
+    --border2: rgba(0,0,0,0.12);
+    --text: #0f0f1a;
+    --text2: #55556a;
+    --text3: #9999b0;
+    --accentGlow: rgba(37,211,102,0.1);
+    --purpleGlow: rgba(124,92,252,0.1);
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadowAccent: 0 0 30px rgba(37,211,102,0.1);
+  }
+
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 240px; min-width: 240px; background: var(--bg2);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    padding: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 24px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; background: var(--accent);
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; box-shadow: var(--shadowAccent);
+  }
+  .logo-text { font-family: var(--fontDisplay); font-weight: 800; font-size: 16px; color: var(--text); }
+  .logo-badge {
+    font-size: 10px; background: var(--accentGlow); color: var(--accent);
+    padding: 2px 6px; border-radius: 20px; border: 1px solid rgba(37,211,102,0.3);
+    margin-left: 4px; font-weight: 600;
+  }
+  .nav { padding: 12px 10px; flex: 1; }
+  .nav-section { margin-bottom: 24px; }
+  .nav-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text3); padding: 0 10px; margin-bottom: 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+    border-radius: 10px; cursor: pointer; transition: var(--transition);
+    color: var(--text2); font-size: 14px; font-weight: 500;
+    border: 1px solid transparent; position: relative;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active {
+    background: var(--accentGlow); color: var(--accent);
+    border-color: rgba(37,211,102,0.2);
+  }
+  .nav-item .badge {
+    margin-left: auto; background: var(--accent); color: #000;
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px;
+  }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px; border-top: 1px solid var(--border);
+  }
+  .plan-badge {
+    background: linear-gradient(135deg, var(--purple), #a855f7);
+    border-radius: 12px; padding: 12px; margin-bottom: 12px;
+  }
+  .plan-badge-title { font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 2px; }
+  .plan-badge-name { font-family: var(--fontDisplay); font-weight: 700; font-size: 14px; color: #fff; }
+  .plan-badge-upgrade {
+    margin-top: 8px; font-size: 11px; color: rgba(255,255,255,0.8);
+    display: flex; align-items: center; gap: 4px; cursor: pointer;
+  }
+  .user-mini {
+    display: flex; align-items: center; gap: 10px; padding: 8px 4px; cursor: pointer;
+    border-radius: 10px; transition: var(--transition);
+  }
+  .user-mini:hover { background: var(--bg3); }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .user-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .user-email { font-size: 11px; color: var(--text3); }
+
+  .main { flex: 1; overflow-y: auto; }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+    padding: 0 28px; height: 60px; display: flex; align-items: center;
+    justify-content: space-between; backdrop-filter: blur(10px);
+  }
+  .topbar-title { font-family: var(--fontDisplay); font-weight: 700; font-size: 18px; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .topbar-btn {
+    width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg2); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; transition: var(--transition); color: var(--text2);
+  }
+  .topbar-btn:hover { background: var(--bg3); color: var(--text); }
+  .page { padding: 28px; }
+
+  /* Cards */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius2); padding: 20px; transition: var(--transition);
+  }
+  .card:hover { border-color: var(--border2); }
+  .card-sm { padding: 16px; border-radius: var(--radius); }
+
+  /* Stats grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius2); padding: 20px; position: relative; overflow: hidden;
+    transition: var(--transition);
+  }
+  .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .stat-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    margin-bottom: 14px;
+  }
+  .stat-value { font-family: var(--fontDisplay); font-weight: 800; font-size: 28px; color: var(--text); line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--text2); margin-top: 4px; margin-bottom: 8px; }
+  .stat-change {
+    font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px;
+  }
+  .stat-change.up { color: var(--accent); }
+  .stat-change.down { color: var(--red); }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  /* Section headers */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .section-title { font-family: var(--fontDisplay); font-weight: 700; font-size: 16px; }
+  .section-action {
+    font-size: 13px; color: var(--accent); cursor: pointer; font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
+    border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: var(--transition); border: none; font-family: var(--font);
+  }
+  .btn-primary {
+    background: var(--accent); color: #000;
+    box-shadow: 0 0 20px rgba(37,211,102,0.3);
+  }
+  .btn-primary:hover { background: #20c45a; box-shadow: 0 0 30px rgba(37,211,102,0.4); transform: translateY(-1px); }
+  .btn-ghost { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg4); }
+  .btn-danger { background: rgba(255,71,87,0.1); color: var(--red); border: 1px solid rgba(255,71,87,0.2); }
+  .btn-danger:hover { background: rgba(255,71,87,0.2); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+  .btn-purple { background: var(--purple); color: #fff; box-shadow: 0 0 20px rgba(124,92,252,0.3); }
+  .btn-purple:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* Badge / pill */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px;
+    border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .pill-green { background: rgba(37,211,102,0.1); color: var(--accent); border: 1px solid rgba(37,211,102,0.2); }
+  .pill-red { background: rgba(255,71,87,0.1); color: var(--red); border: 1px solid rgba(255,71,87,0.2); }
+  .pill-yellow { background: rgba(255,217,61,0.1); color: var(--yellow); border: 1px solid rgba(255,217,61,0.2); }
+  .pill-purple { background: rgba(124,92,252,0.1); color: var(--purple); border: 1px solid rgba(124,92,252,0.2); }
+  .pill-blue { background: rgba(74,144,217,0.1); color: var(--blue); border: 1px solid rgba(74,144,217,0.2); }
+  .pill-gray { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
+
+  /* Inputs */
+  .input-group { margin-bottom: 16px; }
+  .input-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; display: block; }
+  .input {
+    width: 100%; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-size: 14px; font-family: var(--font);
+    outline: none; transition: var(--transition);
+  }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,211,102,0.1); }
+  .input::placeholder { color: var(--text3); }
+  textarea.input { resize: vertical; min-height: 80px; line-height: 1.5; }
+  select.input { cursor: pointer; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600;
+    color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  td {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+    font-size: 14px; color: var(--text2);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg3); }
+
+  /* Chat */
+  .chat-layout { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 60px); }
+  .chat-list { border-right: 1px solid var(--border); overflow-y: auto; }
+  .chat-search {
+    padding: 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0;
+    background: var(--bg2); z-index: 10;
+  }
+  .chat-item {
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    cursor: pointer; transition: var(--transition); border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .chat-item:hover { background: var(--bg3); }
+  .chat-item.active { background: var(--accentGlow); border-left: 2px solid var(--accent); }
+  .chat-avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+  }
+  .chat-info { flex: 1; min-width: 0; }
+  .chat-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-preview { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .chat-meta { text-align: right; flex-shrink: 0; }
+  .chat-time { font-size: 11px; color: var(--text3); }
+  .unread-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    margin: 4px auto 0; box-shadow: 0 0 6px var(--accent);
+  }
+  .chat-window { display: flex; flex-direction: column; background: var(--bg); }
+  .chat-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px; background: var(--bg2);
+  }
+  .online-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 65%; display: flex; flex-direction: column; gap: 4px; }
+  .msg.incoming { align-self: flex-start; }
+  .msg.outgoing { align-self: flex-end; }
+  .msg-bubble {
+    padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5;
+  }
+  .msg.incoming .msg-bubble {
+    background: var(--bg3); border-bottom-left-radius: 4px; color: var(--text);
+  }
+  .msg.outgoing .msg-bubble {
+    background: var(--accent); color: #000; border-bottom-right-radius: 4px;
+  }
+  .msg.ai-reply .msg-bubble {
+    background: rgba(124,92,252,0.15); color: var(--text); border: 1px solid rgba(124,92,252,0.2);
+    border-bottom-right-radius: 4px;
+  }
+  .msg-meta { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
+  .msg.outgoing .msg-meta { justify-content: flex-end; }
+  .ai-badge {
+    font-size: 10px; background: var(--purpleGlow); color: var(--purple);
+    padding: 1px 6px; border-radius: 20px; border: 1px solid rgba(124,92,252,0.3);
+    font-weight: 600;
+  }
+  .chat-input-area {
+    padding: 16px 20px; border-top: 1px solid var(--border); background: var(--bg2);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .ai-suggestions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .ai-suggestion {
+    padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    background: var(--bg3); border: 1px solid var(--border); cursor: pointer;
+    transition: var(--transition); color: var(--text2); display: flex; align-items: center; gap: 5px;
+  }
+  .ai-suggestion:hover { border-color: var(--purple); color: var(--purple); background: var(--purpleGlow); }
+  .chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+  .chat-input-row .input { flex: 1; }
+
+  /* Auth */
+  .auth-page {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--bg); padding: 20px; position: relative; overflow: hidden;
+  }
+  .auth-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 60% 50% at 30% 40%, rgba(37,211,102,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 60% at 70% 60%, rgba(124,92,252,0.06) 0%, transparent 60%);
+  }
+  .auth-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 24px; padding: 40px; width: 100%; max-width: 420px;
+    position: relative; box-shadow: var(--shadow);
+  }
+  .auth-logo {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 32px; justify-content: center;
+  }
+  .auth-logo-icon {
+    width: 48px; height: 48px; background: var(--accent);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; box-shadow: var(--shadowAccent);
+  }
+  .auth-logo-text { font-family: var(--fontDisplay); font-weight: 800; font-size: 22px; }
+  .auth-title { font-family: var(--fontDisplay); font-weight: 700; font-size: 22px; text-align: center; margin-bottom: 6px; }
+  .auth-sub { font-size: 14px; color: var(--text2); text-align: center; margin-bottom: 28px; }
+  .auth-divider {
+    display: flex; align-items: center; gap: 12px; margin: 20px 0;
+    font-size: 12px; color: var(--text3);
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .auth-switch { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text2); }
+  .auth-switch span { color: var(--accent); cursor: pointer; font-weight: 600; }
+
+  /* Pricing */
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .pricing-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius2); padding: 28px; position: relative; transition: var(--transition);
+  }
+  .pricing-card:hover { border-color: var(--border2); transform: translateY(-4px); box-shadow: var(--shadow); }
+  .pricing-card.featured {
+    border-color: var(--accent); background: linear-gradient(135deg, rgba(37,211,102,0.05), var(--bg2));
+    box-shadow: var(--shadowAccent);
+  }
+  .pricing-card.featured:hover { box-shadow: 0 0 40px rgba(37,211,102,0.25); }
+  .pricing-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #000; font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+  }
+  .pricing-plan { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pricing-price {
+    font-family: var(--fontDisplay); font-weight: 800; font-size: 40px; color: var(--text);
+    margin-bottom: 4px; display: flex; align-items: flex-start; gap: 2px;
+  }
+  .pricing-price sup { font-size: 20px; margin-top: 8px; }
+  .pricing-period { font-size: 14px; color: var(--text2); margin-bottom: 20px; }
+  .pricing-features { list-style: none; margin-bottom: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .pricing-features li { font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+  .pricing-features li::before { content: '✓'; color: var(--accent); font-weight: 700; }
+  .pricing-features li.disabled { color: var(--text3); opacity: 0.5; }
+  .pricing-features li.disabled::before { content: '×'; color: var(--text3); }
+
+  /* WhatsApp connect */
+  .connect-steps { display: flex; flex-direction: column; gap: 16px; }
+  .connect-step {
+    display: flex; align-items: flex-start; gap: 16px; padding: 20px;
+    background: var(--bg3); border-radius: var(--radius); border: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .connect-step.completed { border-color: rgba(37,211,102,0.3); background: var(--accentGlow); }
+  .step-num {
+    width: 32px; height: 32px; border-radius: 50%; background: var(--bg4);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+    font-size: 14px; flex-shrink: 0; color: var(--text2);
+  }
+  .connect-step.completed .step-num { background: var(--accent); color: #000; }
+  .step-content { flex: 1; }
+  .step-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .step-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* Settings tabs */
+  .tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg3); border-radius: 12px; margin-bottom: 24px; }
+  .tab {
+    flex: 1; padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: var(--transition); text-align: center; color: var(--text2);
+    border: none; background: none; font-family: var(--font);
+  }
+  .tab.active { background: var(--bg2); color: var(--text); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeInUp 0.4s ease both; }
+  .pulse { animation: pulse 2s infinite; }
+  .spin { animation: spin 1s linear infinite; }
+
+  /* Notification dot */
+  .notif-dot {
+    position: absolute; top: -3px; right: -3px; width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%; border: 2px solid var(--bg2);
+  }
+
+  /* Chart bars */
+  .chart-bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+  .chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .chart-bar {
+    width: 100%; border-radius: 6px 6px 0 0; transition: height 0.6s cubic-bezier(0.4,0,0.2,1);
+    cursor: pointer; position: relative;
+  }
+  .chart-bar:hover { filter: brightness(1.2); }
+  .chart-label { font-size: 11px; color: var(--text3); }
+
+  /* Toggle */
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .toggle {
+    width: 44px; height: 24px; border-radius: 12px; background: var(--bg4);
+    position: relative; transition: var(--transition); border: 1px solid var(--border);
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: #fff;
+    transition: var(--transition); box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .toggle.on::after { left: 23px; }
+  .toggle-label { font-size: 14px; color: var(--text); font-weight: 500; }
+
+  /* Mobile overlay */
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .chat-layout { grid-template-columns: 1fr; }
+  }
+
+  /* Activity feed */
+  .activity-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .activity-content { flex: 1; }
+  .activity-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+  .activity-time { font-size: 11px; color: var(--text3); margin-top: 2px; }
+`;
+
+// ============================================================
+// MOCK DATA
+// ============================================================
+const MOCK_CONVERSATIONS = [
+  { id: 1, name: "أحمد محمد", avatar: "أ", color: "#25d366", lastMsg: "كم سعر المنتج؟", time: "2م", unread: 3, intent: "purchase", phone: "+966501234567" },
+  { id: 2, name: "Sara Al-Rashidi", avatar: "S", color: "#7c5cfc", lastMsg: "I need help with my order", time: "10م", unread: 1, intent: "complaint", phone: "+966509876543" },
+  { id: 3, name: "فاطمة العلي", avatar: "ف", color: "#ff6b35", lastMsg: "شكراً جزيلاً على الخدمة!", time: "أمس", unread: 0, intent: "inquiry", phone: "+966551234567" },
+  { id: 4, name: "محمد الحارثي", avatar: "م", color: "#4a90d9", lastMsg: "متى يصل الطلب؟", time: "أمس", unread: 0, intent: "purchase", phone: "+966561234567" },
+  { id: 5, name: "Noura Hassan", avatar: "N", color: "#ffd93d", lastMsg: "Do you have this in blue?", time: "الإثنين", unread: 2, intent: "inquiry", phone: "+966571234567" },
+];
+
+const MOCK_MESSAGES = {
+  1: [
+    { id: 1, type: "incoming", text: "السلام عليكم! عندي سؤال", time: "1:45م" },
+    { id: 2, type: "ai-reply", text: "وعليكم السلام! أهلاً وسهلاً، كيف يمكنني مساعدتك؟", time: "1:45م", isAI: true },
+    { id: 3, type: "incoming", text: "كم سعر المنتج؟", time: "1:46م" },
+    { id: 4, type: "ai-reply", text: "منتجاتنا تبدأ من 49 ريال وتصل إلى 299 ريال حسب المواصفات. هل تريد تفاصيل أكثر؟ 🛍️", time: "1:46م", isAI: true },
+    { id: 5, type: "incoming", text: "نعم، ما هي الخيارات المتاحة؟", time: "2:00م" },
+  ],
+  2: [
+    { id: 1, type: "incoming", text: "Hello, I need help with my order #12345", time: "9:30م" },
+    { id: 2, type: "ai-reply", text: "Hi Sara! I found your order #12345. It's currently being processed. Would you like more details?", time: "9:30م", isAI: true },
+    { id: 3, type: "incoming", text: "When will it be delivered?", time: "9:31م" },
+    { id: 4, type: "outgoing", text: "Your order is expected to arrive within 2-3 business days. Track it here: link.shop/track", time: "10:00م" },
+    { id: 5, type: "incoming", text: "I need help with my order", time: "10:00م" },
+  ],
+};
+
+const CHART_DATA = [
+  { day: "الأح", messages: 45, color: "#25d366" },
+  { day: "الإث", messages: 78, color: "#25d366" },
+  { day: "الثل", messages: 62, color: "#25d366" },
+  { day: "الأر", messages: 95, color: "#25d366" },
+  { day: "الخم", messages: 88, color: "#25d366" },
+  { day: "الجم", messages: 120, color: "#25d366" },
+  { day: "السب", messages: 67, color: "#7c5cfc" },
+];
+
+// ============================================================
+// COMPONENTS
+// ============================================================
+
+function Toggle({ on, onChange }) {
+  return (
+    <div className={`toggle ${on ? "on" : ""}`} onClick={() => onChange(!on)} />
+  );
+}
+
+function StatCard({ icon, value, label, change, up, color }) {
+  return (
+    <div className="stat-card fade-in">
+      <div className="stat-icon" style={{ background: color + "22", color: color }}>{icon}</div>
+      <div className="stat-value">{value}</div>
+      <div className="stat-label">{label}</div>
+      <div className={`stat-change ${up ? "up" : "down"}`}>
+        {up ? "↑" : "↓"} {change}
+        <span style={{ color: "var(--text3)", fontWeight: 400 }}> vs الأسبوع الماضي</span>
+      </div>
+    </div>
+  );
+}
+
+function MiniChart() {
+  const max = Math.max(...CHART_DATA.map(d => d.messages));
+  return (
+    <div className="chart-bar-wrap">
+      {CHART_DATA.map((d, i) => (
+        <div key={i} className="chart-bar-col">
+          <div
+            className="chart-bar"
+            style={{
+              height: `${(d.messages / max) * 100}%`,
+              background: i === 6 ? "var(--purple)" : "var(--accent)",
+              opacity: i === 6 ? 1 : 0.7 + (i / CHART_DATA.length) * 0.3,
+            }}
+            title={`${d.messages} رسالة`}
+          />
+          <div className="chart-label">{d.day}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// PAGES
+// ============================================================
+
+function Dashboard() {
+  return (
+    <div className="page fade-in">
+      <div className="stats-grid">
+        <StatCard icon="💬" value="1,247" label="إجمالي الرسائل" change="23%" up={true} color="var(--accent)" />
+        <StatCard icon="👥" value="342" label="العملاء الجدد" change="12%" up={true} color="var(--purple)" />
+        <StatCard icon="🤖" value="94%" label="معدل الرد التلقائي" change="3%" up={true} color="var(--blue)" />
+        <StatCard icon="💰" value="18%" label="معدل التحويل" change="2%" up={false} color="var(--orange)" />
+      </div>
+
+      <div className="grid-2" style={{ marginBottom: 24 }}>
+        <div className="card">
+          <div className="section-header">
+            <span className="section-title">📊 نشاط الرسائل - الأسبوع</span>
+            <span className="pill pill-green">555 رسالة</span>
+          </div>
+          <MiniChart />
+        </div>
+
+        <div className="card">
+          <div className="section-header">
+            <span className="section-title">🧠 تحليل نية العملاء</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {[
+              { label: "🛒 شراء", pct: 42, color: "var(--accent)" },
+              { label: "❓ استفسار", pct: 35, color: "var(--blue)" },
+              { label: "😤 شكوى", pct: 15, color: "var(--red)" },
+              { label: "💬 أخرى", pct: 8, color: "var(--text3)" },
+            ].map((item, i) => (
+              <div key={i}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5, color: "var(--text2)" }}>
+                  <span>{item.label}</span>
+                  <span style={{ fontWeight: 600, color: "var(--text)" }}>{item.pct}%</span>
+                </div>
+                <div style={{ height: 6, background: "var(--bg4)", borderRadius: 3 }}>
+                  <div style={{ height: "100%", width: `${item.pct}%`, background: item.color, borderRadius: 3, transition: "width 1s ease" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="card">
+          <div className="section-header">
+            <span className="section-title">⚡ آخر الأنشطة</span>
+            <span className="section-action">عرض الكل →</span>
+          </div>
+          {[
+            { icon: "💬", bg: "rgba(37,211,102,0.1)", text: "رسالة جديدة من أحمد محمد", time: "منذ 2 دقائق" },
+            { icon: "🤖", bg: "rgba(124,92,252,0.1)", text: "البوت أجاب على 8 رسائل تلقائياً", time: "منذ 15 دقيقة" },
+            { icon: "🛒", bg: "rgba(255,107,53,0.1)", text: "عميل جديد اشترى منتج", time: "منذ 32 دقيقة" },
+            { icon: "📧", bg: "rgba(74,144,217,0.1)", text: "إشعار إيميل أُرسل لـ Sara", time: "منذ ساعة" },
+          ].map((item, i) => (
+            <div key={i} className="activity-item">
+              <div className="activity-icon" style={{ background: item.bg }}>{item.icon}</div>
+              <div className="activity-content">
+                <div className="activity-text">{item.text}</div>
+                <div className="activity-time">{item.time}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="card">
+          <div className="section-header">
+            <span className="section-title">🏆 أفضل العملاء</span>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>العميل</th>
+                  <th>الرسائل</th>
+                  <th>النية</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {MOCK_CONVERSATIONS.map(c => (
+                  <tr key={c.id}>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div className="chat-avatar" style={{ width: 28, height: 28, fontSize: 12, background: c.color + "33", color: c.color }}>
+                          {c.avatar}
+                        </div>
+                        <span style={{ color: "var(--text)", fontWeight: 500 }}>{c.name}</span>
+                      </div>
+                    </td>
+                    <td>{Math.floor(Math.random() * 50 + 10)}</td>
+                    <td>
+                      <span className={`pill ${c.intent === "purchase" ? "pill-green" : c.intent === "complaint" ? "pill-red" : "pill-blue"}`}>
+                        {c.intent === "purchase" ? "🛒 شراء" : c.intent === "complaint" ? "😤 شكوى" : "❓ استفسار"}
+                      </span>
+                    </td>
+                    <td><span className="pill pill-green">نشط</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Conversations() {
+  const [active, setActive] = useState(1);
+  const [input, setInput] = useState("");
+  const [msgs, setMsgs] = useState(MOCK_MESSAGES);
+  const [aiOn, setAiOn] = useState(true);
+  const messagesEndRef = useRef(null);
+
+  const currentMsgs = msgs[active] || [];
+  const currentContact = MOCK_CONVERSATIONS.find(c => c.id === active);
+
+  const send = () => {
+    if (!input.trim()) return;
+    const newMsg = { id: Date.now(), type: "outgoing", text: input, time: new Date().toLocaleTimeString("ar", { hour: "2-digit", minute: "2-digit" }) };
+    setMsgs(prev => ({ ...prev, [active]: [...(prev[active] || []), newMsg] }));
+    setInput("");
+  };
+
+  const suggestions = [
+    "✨ سأتابع طلبك فوراً",
+    "💰 السعر يبدأ من 49 ريال",
+    "📦 التوصيل خلال 2-3 أيام",
+  ];
+
+  return (
+    <div className="chat-layout" style={{ height: "calc(100vh - 60px)" }}>
+      <div className="chat-list" style={{ background: "var(--bg2)" }}>
+        <div className="chat-search">
+          <input className="input" placeholder="🔍 بحث في المحادثات..." />
+        </div>
+        {MOCK_CONVERSATIONS.map(c => (
+          <div key={c.id} className={`chat-item ${active === c.id ? "active" : ""}`} onClick={() => setActive(c.id)}>
+            <div className="chat-avatar" style={{ background: c.color + "33", color: c.color }}>{c.avatar}</div>
+            <div className="chat-info">
+              <div className="chat-name">{c.name}</div>
+              <div className="chat-preview">{c.lastMsg}</div>
+            </div>
+            <div className="chat-meta">
+              <div className="chat-time">{c.time}</div>
+              {c.unread > 0 && <div className="unread-dot" />}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="chat-window">
+        {currentContact && (
+          <div className="chat-header">
+            <div className="chat-avatar" style={{ background: currentContact.color + "33", color: currentContact.color, width: 40, height: 40, fontSize: 16 }}>
+              {currentContact.avatar}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+                {currentContact.name}
+                <span className={`pill ${currentContact.intent === "purchase" ? "pill-green" : currentContact.intent === "complaint" ? "pill-red" : "pill-blue"}`} style={{ fontSize: 11 }}>
+                  {currentContact.intent === "purchase" ? "🛒 شراء" : currentContact.intent === "complaint" ? "😤 شكوى" : "❓ استفسار"}
+                </span>
+              </div>
+              <div style={{ fontSize: 12, color: "var(--text3)" }}>{currentContact.phone}</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--text2)" }}>
+                <Toggle on={aiOn} onChange={setAiOn} />
+                <span>ذكاء اصطناعي</span>
+              </div>
+              <button className="btn btn-ghost btn-sm">⭐ مهم</button>
+              <button className="btn btn-ghost btn-sm">📝 ملخص</button>
+            </div>
+          </div>
+        )}
+
+        <div className="messages">
+          {currentMsgs.map(msg => (
+            <div key={msg.id} className={`msg ${msg.type}`}>
+              <div className="msg-bubble">{msg.text}</div>
+              <div className="msg-meta">
+                {msg.isAI && <span className="ai-badge">🤖 AI</span>}
+                <span>{msg.time}</span>
+                {msg.type === "outgoing" && <span>✓✓</span>}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="chat-input-area">
+          {aiOn && (
+            <div>
+              <div style={{ fontSize: 11, color: "var(--purple)", fontWeight: 600, marginBottom: 6 }}>🤖 اقتراحات AI</div>
+              <div className="ai-suggestions">
+                {suggestions.map((s, i) => (
+                  <div key={i} className="ai-suggestion" onClick={() => setInput(s)}>✦ {s}</div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="chat-input-row">
+            <button className="topbar-btn">📎</button>
+            <input
+              className="input"
+              placeholder="اكتب رسالة..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && send()}
+            />
+            <button className="btn btn-primary" onClick={send}>إرسال ↗</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WhatsAppConnect() {
+  const [step, setStep] = useState(1);
+  const [phone, setPhone] = useState("");
+  const [token, setToken] = useState("");
+
+  return (
+    <div className="page fade-in">
+      <div style={{ maxWidth: 700 }}>
+        <div className="card" style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+            <div style={{ width: 56, height: 56, background: "rgba(37,211,102,0.1)", borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>💬</div>
+            <div>
+              <div style={{ fontFamily: "var(--fontDisplay)", fontWeight: 700, fontSize: 18 }}>ربط WhatsApp Business</div>
+              <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 2 }}>اتبع الخطوات لربط حسابك مع المنصة</div>
+            </div>
+            <div style={{ marginLeft: "auto" }}>
+              <span className={`pill ${step >= 3 ? "pill-green" : "pill-yellow"}`}>
+                {step >= 3 ? "✓ متصل" : `الخطوة ${step}/3`}
+              </span>
+            </div>
+          </div>
+
+          <div className="connect-steps">
+            <div className={`connect-step ${step > 1 ? "completed" : ""}`}>
+              <div className="step-num">{step > 1 ? "✓" : "1"}</div>
+              <div className="step-content">
+                <div className="step-title">إنشاء تطبيق Meta Business</div>
+                <div className="step-desc">سجّل دخولك على Meta Developer Portal وأنشئ تطبيقاً جديداً من نوع Business</div>
+                {step === 1 && (
+                  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                    <a href="#" className="btn btn-primary btn-sm">🔗 فتح Meta Developer</a>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setStep(2)}>تم ✓</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={`connect-step ${step > 2 ? "completed" : ""}`}>
+              <div className="step-num">{step > 2 ? "✓" : "2"}</div>
+              <div className="step-content">
+                <div className="step-title">أدخل بيانات التطبيق</div>
+                <div className="step-desc">احصل على Phone Number ID و Access Token من لوحة تحكم Meta</div>
+                {step === 2 && (
+                  <div style={{ marginTop: 12 }}>
+                    <div className="input-group">
+                      <label className="input-label">رقم الهاتف (Phone Number ID)</label>
+                      <input className="input" placeholder="1234567890" value={phone} onChange={e => setPhone(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Access Token</label>
+                      <input className="input" type="password" placeholder="EAAxxxxxxxx..." value={token} onChange={e => setToken(e.target.value)} />
+                    </div>
+                    <button className="btn btn-primary btn-sm" onClick={() => phone && token && setStep(3)}>
+                      🔗 ربط الحساب
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={`connect-step ${step > 3 ? "completed" : ""}`}>
+              <div className="step-num">{step > 3 ? "✓" : "3"}</div>
+              <div className="step-content">
+                <div className="step-title">إعداد Webhook</div>
+                <div className="step-desc">أضف هذا الرابط في إعدادات Webhook بتطبيقك على Meta</div>
+                {step >= 3 && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <div className="input" style={{ flex: 1, fontSize: 12, color: "var(--accent)", fontFamily: "monospace", cursor: "text" }}>
+                        https://api.yourapp.com/webhook/whatsapp
+                      </div>
+                      <button className="btn btn-ghost btn-sm">📋 نسخ</button>
+                    </div>
+                    {step === 3 && (
+                      <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+                        <button className="btn btn-primary btn-sm" onClick={() => setStep(4)}>✓ تم الإعداد</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {step >= 4 && (
+          <div className="card fade-in" style={{ borderColor: "rgba(37,211,102,0.3)", background: "var(--accentGlow)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ fontSize: 40 }}>🎉</div>
+              <div>
+                <div style={{ fontFamily: "var(--fontDisplay)", fontWeight: 700, fontSize: 18, color: "var(--accent)" }}>تم الربط بنجاح!</div>
+                <div style={{ fontSize: 13, color: "var(--text2)", marginTop: 4 }}>واتساب متصل ويعمل بشكل مثالي. البوت جاهز للرد التلقائي.</div>
+              </div>
+              <div style={{ marginLeft: "auto" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent)", fontSize: 13, fontWeight: 600 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 8px var(--accent)" }} className="pulse" />
+                  متصل
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BotTraining() {
+  const [activeTab, setActiveTab] = useState("text");
+  const [texts, setTexts] = useState([
+    { id: 1, content: "ساعات العمل: من الأحد إلى الخميس، 9 صباحاً حتى 6 مساءً" },
+    { id: 2, content: "سياسة الإرجاع: يمكن إرجاع المنتجات خلال 14 يوماً من الاستلام" },
+  ]);
+  const [newText, setNewText] = useState("");
+  const [tone, setTone] = useState("friendly");
+
+  return (
+    <div className="page fade-in">
+      <div className="grid-2">
+        <div>
+          <div className="card" style={{ marginBottom: 20 }}>
+            <div className="section-header"><span className="section-title">🤖 شخصية البوت</span></div>
+            <div className="input-group">
+              <label className="input-label">اسم البوت</label>
+              <input className="input" defaultValue="مساعد الأعمال الذكي" />
+            </div>
+            <div className="input-group">
+              <label className="input-label">نبرة الرد</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                {[
+                  { key: "formal", label: "🎩 رسمي" },
+                  { key: "friendly", label: "😊 ودود" },
+                  { key: "marketing", label: "🚀 تسويقي" },
+                ].map(t => (
+                  <div
+                    key={t.key}
+                    onClick={() => setTone(t.key)}
+                    style={{
+                      padding: "10px 12px", borderRadius: 10, cursor: "pointer",
+                      border: `1px solid ${tone === t.key ? "var(--accent)" : "var(--border)"}`,
+                      background: tone === t.key ? "var(--accentGlow)" : "var(--bg3)",
+                      color: tone === t.key ? "var(--accent)" : "var(--text2)",
+                      fontSize: 13, fontWeight: 500, textAlign: "center", transition: "var(--transition)"
+                    }}
+                  >
+                    {t.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="input-group">
+              <label className="input-label">اللغات المدعومة</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <span className="pill pill-green">🇸🇦 العربية</span>
+                <span className="pill pill-blue">🇬🇧 الإنجليزية</span>
+                <span className="pill pill-gray">+ إضافة لغة</span>
+              </div>
+            </div>
+            <div className="input-group">
+              <label className="input-label">رسالة الترحيب</label>
+              <textarea className="input" defaultValue="أهلاً وسهلاً! 👋 أنا مساعدك الذكي، كيف يمكنني مساعدتك اليوم؟" />
+            </div>
+            <button className="btn btn-primary" style={{ width: "100%" }}>💾 حفظ الإعدادات</button>
+          </div>
+        </div>
+
+        <div>
+          <div className="card">
+            <div className="section-header"><span className="section-title">📚 تدريب البوت</span></div>
+            <div className="tabs">
+              {[
+                { key: "text", label: "📝 نصوص" },
+                { key: "pdf", label: "📄 PDF" },
+                { key: "faq", label: "❓ FAQ" },
+              ].map(t => (
+                <button key={t.key} className={`tab ${activeTab === t.key ? "active" : ""}`} onClick={() => setActiveTab(t.key)}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === "text" && (
+              <div>
+                <div className="input-group">
+                  <label className="input-label">أضف معلومات للبوت</label>
+                  <textarea
+                    className="input" rows={3}
+                    placeholder="مثال: ساعات العمل، الأسعار، سياسات الشركة..."
+                    value={newText} onChange={e => setNewText(e.target.value)}
+                  />
+                </div>
+                <button className="btn btn-primary btn-sm" style={{ marginBottom: 16 }}
+                  onClick={() => { if (newText) { setTexts([...texts, { id: Date.now(), content: newText }]); setNewText(""); } }}>
+                  ➕ إضافة
+                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 200, overflowY: "auto" }}>
+                  {texts.map(t => (
+                    <div key={t.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 12px", background: "var(--bg3)", borderRadius: 10, border: "1px solid var(--border)" }}>
+                      <span style={{ fontSize: 12, flex: 1, color: "var(--text2)", lineHeight: 1.5 }}>{t.content}</span>
+                      <span style={{ cursor: "pointer", color: "var(--red)", fontSize: 14 }}
+                        onClick={() => setTexts(texts.filter(x => x.id !== t.id))}>×</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "pdf" && (
+              <div style={{ textAlign: "center", padding: "30px 20px" }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>📄</div>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>رفع ملف PDF</div>
+                <div style={{ fontSize: 13, color: "var(--text2)", marginBottom: 16 }}>سيتم تحليل المستند وتدريب البوت تلقائياً</div>
+                <div style={{ border: "2px dashed var(--border2)", borderRadius: 12, padding: "30px 20px", cursor: "pointer", transition: "var(--transition)" }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border2)"}>
+                  <div style={{ fontSize: 13, color: "var(--text3)" }}>اسحب الملف هنا أو <span style={{ color: "var(--accent)" }}>اختر ملفاً</span></div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "faq" && (
+              <div>
+                {[
+                  { q: "ما هي ساعات العمل؟", a: "من 9 صباحاً حتى 6 مساءً" },
+                  { q: "كيف أتابع طلبي؟", a: "أرسل رقم الطلب وسنتابعه لك" },
+                ].map((faq, i) => (
+                  <div key={i} style={{ padding: "12px", background: "var(--bg3)", borderRadius: 10, border: "1px solid var(--border)", marginBottom: 8 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 4 }}>❓ {faq.q}</div>
+                    <div style={{ fontSize: 12, color: "var(--text2)" }}>✅ {faq.a}</div>
+                  </div>
+                ))}
+                <button className="btn btn-ghost btn-sm" style={{ width: "100%", marginTop: 8 }}>➕ إضافة سؤال</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Pricing({ onUpgrade }) {
+  const plans = [
+    {
+      name: "Free", price: 0, period: "للأبد", color: "var(--text2)",
+      features: ["100 رسالة/شهر", "بوت واحد", "ردود تلقائية أساسية", "disabled:تحليل ذكي", "disabled:دعم متعدد اللغات", "disabled:تقارير متقدمة"],
+    },
+    {
+      name: "Pro", price: 10, period: "/شهر", color: "var(--accent)", featured: true,
+      features: ["10,000 رسالة/شهر", "3 بوتات", "ذكاء اصطناعي كامل", "تحليل النوايا", "دعم عربي + إنجليزي", "تقارير أسبوعية"],
+    },
+    {
+      name: "Business", price: 25, period: "/شهر", color: "var(--purple)",
+      features: ["رسائل لا محدودة", "بوتات لا محدودة", "API كامل", "Multi-agent", "CRM تكامل", "دعم أولوية 24/7"],
+    },
+  ];
+
+  return (
+    <div className="page fade-in">
+      <div style={{ textAlign: "center", marginBottom: 36 }}>
+        <div style={{ fontFamily: "var(--fontDisplay)", fontWeight: 800, fontSize: 28, marginBottom: 8 }}>
+          💎 خطط الاشتراك
+        </div>
+        <div style={{ fontSize: 15, color: "var(--text2)" }}>اختر الخطة المناسبة لعملك وابدأ الآن</div>
+      </div>
+      <div className="pricing-grid">
+        {plans.map((plan, i) => (
+          <div key={i} className={`pricing-card ${plan.featured ? "featured" : ""}`}>
+            {plan.featured && <div className="pricing-badge">⭐ الأكثر شيوعاً</div>}
+            <div className="pricing-plan" style={{ color: plan.color }}>{plan.name}</div>
+            <div className="pricing-price">
+              {plan.price > 0 && <sup>$</sup>}
+              {plan.price === 0 ? "مجاني" : plan.price}
+            </div>
+            <div className="pricing-period">{plan.period}</div>
+            <ul className="pricing-features">
+              {plan.features.map((f, j) => {
+                const disabled = f.startsWith("disabled:");
+                return (
+                  <li key={j} className={disabled ? "disabled" : ""}>{disabled ? f.replace("disabled:", "") : f}</li>
+                );
+              })}
+            </ul>
+            <button
+              className={`btn ${plan.featured ? "btn-primary" : plan.name === "Business" ? "btn-purple" : "btn-ghost"}`}
+              style={{ width: "100%" }}
+              onClick={() => onUpgrade(plan.name)}
+            >
+              {plan.price === 0 ? "ابدأ مجاناً" : `ترقية إلى ${plan.name} →`}
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="card" style={{ marginTop: 28, textAlign: "center" }}>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>🔒 الدفع آمن بـ Stripe</div>
+        <div style={{ fontSize: 13, color: "var(--text2)" }}>بطاقة ائتمان · Apple Pay · Google Pay · تشفير SSL</div>
+      </div>
+    </div>
+  );
+}
+
+function Settings() {
+  const [activeTab, setActiveTab] = useState("general");
+  const [notifications, setNotifications] = useState({ newMsg: true, email: false, daily: true });
+  const [workHours, setWorkHours] = useState({ enabled: true, from: "09:00", to: "18:00" });
+
+  return (
+    <div className="page fade-in">
+      <div className="tabs" style={{ maxWidth: 500 }}>
+        {[
+          { key: "general", label: "⚙️ عام" },
+          { key: "bot", label: "🤖 البوت" },
+          { key: "notifications", label: "🔔 إشعارات" },
+          { key: "api", label: "🔑 API" },
+        ].map(t => (
+          <button key={t.key} className={`tab ${activeTab === t.key ? "active" : ""}`} onClick={() => setActiveTab(t.key)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "general" && (
+        <div className="grid-2" style={{ maxWidth: 800 }}>
+          <div className="card">
+            <div className="section-title" style={{ marginBottom: 16 }}>معلومات العمل</div>
+            {[
+              { label: "اسم العمل", defaultValue: "شركتي للتجارة" },
+              { label: "البريد الإلكتروني", defaultValue: "info@myshop.com" },
+              { label: "الموقع الإلكتروني", defaultValue: "myshop.com" },
+            ].map((f, i) => (
+              <div key={i} className="input-group">
+                <label className="input-label">{f.label}</label>
+                <input className="input" defaultValue={f.defaultValue} />
+              </div>
+            ))}
+            <button className="btn btn-primary" style={{ width: "100%" }}>💾 حفظ</button>
+          </div>
+          <div className="card">
+            <div className="section-title" style={{ marginBottom: 16 }}>ساعات العمل</div>
+            <div style={{ marginBottom: 16 }}>
+              <div className="toggle-wrap" style={{ marginBottom: 12 }}>
+                <Toggle on={workHours.enabled} onChange={v => setWorkHours({ ...workHours, enabled: v })} />
+                <span className="toggle-label">تفعيل ساعات العمل</span>
+              </div>
+              {workHours.enabled && (
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <label className="input-label">من</label>
+                    <input type="time" className="input" value={workHours.from} onChange={e => setWorkHours({ ...workHours, from: e.target.value })} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label className="input-label">إلى</label>
+                    <input type="time" className="input" value={workHours.to} onChange={e => setWorkHours({ ...workHours, to: e.target.value })} />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="input-group">
+              <label className="input-label">رسالة خارج أوقات العمل</label>
+              <textarea className="input" defaultValue="شكراً لتواصلك! سيتم الرد خلال ساعات العمل ⏰" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "notifications" && (
+        <div className="card" style={{ maxWidth: 500 }}>
+          <div className="section-title" style={{ marginBottom: 20 }}>إعدادات الإشعارات</div>
+          {[
+            { key: "newMsg", label: "🔔 إشعار عند رسالة جديدة", desc: "تلقي إشعار فوري عبر المتصفح" },
+            { key: "email", label: "📧 إشعارات البريد الإلكتروني", desc: "ملخص يومي على الإيميل" },
+            { key: "daily", label: "📊 تقرير يومي", desc: "إحصائيات نهاية اليوم" },
+          ].map(n => (
+            <div key={n.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>{n.label}</div>
+                <div style={{ fontSize: 12, color: "var(--text3)" }}>{n.desc}</div>
+              </div>
+              <Toggle on={notifications[n.key]} onChange={v => setNotifications({ ...notifications, [n.key]: v })} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === "api" && (
+        <div className="card" style={{ maxWidth: 600 }}>
+          <div className="section-title" style={{ marginBottom: 16 }}>مفاتيح API</div>
+          {[
+            { label: "OpenAI API Key", key: "sk-proj-xxxxxxx...", placeholder: "sk-..." },
+            { label: "WhatsApp Phone Number ID", key: "1234567890", placeholder: "أدخل Phone Number ID" },
+            { label: "WhatsApp Access Token", key: "EAAxxxxxxxx...", placeholder: "EAA..." },
+          ].map((f, i) => (
+            <div key={i} className="input-group">
+              <label className="input-label">{f.label}</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                <input className="input" type="password" defaultValue={f.key} style={{ flex: 1 }} />
+                <button className="btn btn-ghost btn-sm">👁️</button>
+              </div>
+            </div>
+          ))}
+          <button className="btn btn-primary">💾 حفظ المفاتيح</button>
+        </div>
+      )}
+
+      {activeTab === "bot" && (
+        <div className="card" style={{ maxWidth: 600 }}>
+          <div className="section-title" style={{ marginBottom: 16 }}>الردود التلقائية بالكلمات المفتاحية</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+            {[
+              { keyword: "سعر, price", reply: "أسعارنا تبدأ من 49 ريال 💰" },
+              { keyword: "موقع, location", reply: "نحن في الرياض، شارع التحلية 📍" },
+              { keyword: "شكراً, thank", reply: "العفو! نحن دائماً في خدمتك 🙏" },
+            ].map((r, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <input className="input" defaultValue={r.keyword} style={{ flex: 1 }} placeholder="الكلمة المفتاحية" />
+                <span style={{ color: "var(--text3)" }}>→</span>
+                <input className="input" defaultValue={r.reply} style={{ flex: 2 }} placeholder="الرد التلقائي" />
+                <button style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 18, padding: "0 4px" }}>×</button>
+              </div>
+            ))}
+          </div>
+          <button className="btn btn-ghost btn-sm">➕ إضافة كلمة مفتاحية</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// AUTH SCREENS
+// ============================================================
+function AuthScreen({ onLogin }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = () => {
+    setLoading(true);
+    setTimeout(() => { setLoading(false); onLogin(); }, 1200);
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-bg" />
+      <div className="auth-card fade-in">
+        <div className="auth-logo">
+          <div className="auth-logo-icon">💬</div>
+          <div className="auth-logo-text">WhatyBot</div>
+        </div>
+        <div className="auth-title">{isLogin ? "مرحباً بعودتك 👋" : "أنشئ حسابك"}</div>
+        <div className="auth-sub">{isLogin ? "سجّل دخولك لإدارة بوت واتساب الذكي" : "ابدأ مجاناً، لا تحتاج بطاقة ائتمان"}</div>
+
+        {!isLogin && (
+          <div className="input-group">
+            <label className="input-label">اسم العمل</label>
+            <input className="input" placeholder="شركتي للتجارة" />
+          </div>
+        )}
+        <div className="input-group">
+          <label className="input-label">البريد الإلكتروني</label>
+          <input className="input" type="email" placeholder="you@company.com" />
+        </div>
+        <div className="input-group">
+          <label className="input-label">كلمة المرور</label>
+          <input className="input" type="password" placeholder="••••••••" />
+        </div>
+
+        <button className="btn btn-primary" style={{ width: "100%", padding: "12px", fontSize: 15 }} onClick={handleSubmit}>
+          {loading ? <span className="spin" style={{ display: "inline-block", width: 16, height: 16, border: "2px solid #000", borderTopColor: "transparent", borderRadius: "50%" }} /> :
+            isLogin ? "🚀 تسجيل الدخول" : "✨ إنشاء الحساب"}
+        </button>
+
+        <div className="auth-divider">أو</div>
+        <button className="btn btn-ghost" style={{ width: "100%", padding: "11px" }}>
+          🌐 متابعة بـ Google
+        </button>
+
+        <div className="auth-switch">
+          {isLogin ? <>ليس لديك حساب؟ <span onClick={() => setIsLogin(false)}>إنشاء حساب</span></> :
+            <>لديك حساب؟ <span onClick={() => setIsLogin(true)}>تسجيل الدخول</ span></>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MAIN APP
+// ============================================================
+const NAV = [
+  { id: "dashboard", icon: "📊", label: "لوحة التحكم" },
+  { id: "conversations", icon: "💬", label: "المحادثات", badge: "5" },
+  { id: "bot", icon: "🤖", label: "تدريب البوت" },
+  { id: "connect", icon: "📱", label: "ربط واتساب" },
+  { id: "pricing", icon: "💎", label: "الاشتراكات" },
+  { id: "settings", icon: "⚙️", label: "الإعدادات" },
+];
+
+const PAGE_TITLES = {
+  dashboard: "لوحة التحكم",
+  conversations: "المحادثات",
+  bot: "تدريب البوت",
+  connect: "ربط واتساب",
+  pricing: "خطط الاشتراك",
+  settings: "الإعدادات",
+};
+
+export default function App() {
+  const [authed, setAuthed] = useState(false);
+  const [page, setPage] = useState("dashboard");
+  const [theme, setTheme] = useState("dark");
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.className = theme === "light" ? "light" : "";
+  }, [theme]);
+
+  if (!authed) return (
+    <>
+      <style>{styles}</style>
+      <AuthScreen onLogin={() => setAuthed(true)} />
+    </>
+  );
+
+  return (
+    <>
+      <style>{styles}</style>
+      <div className="app" dir="rtl">
+        {/* SIDEBAR */}
+        <nav className="sidebar">
+          <div className="sidebar-logo">
+            <div className="logo-icon">💬</div>
+            <div>
+              <div className="logo-text">WhatyBot<span className="logo-badge">AI</span></div>
+            </div>
+          </div>
+
+          <div className="nav">
+            <div className="nav-section">
+              <div className="nav-label">القائمة الرئيسية</div>
+              {NAV.slice(0, 4).map(n => (
+                <div key={n.id} className={`nav-item ${page === n.id ? "active" : ""}`} onClick={() => setPage(n.id)}>
+                  <span className="icon">{n.icon}</span>
+                  {n.label}
+                  {n.badge && <span className="badge">{n.badge}</span>}
+                </div>
+              ))}
+            </div>
+            <div className="nav-section">
+              <div className="nav-label">الإدارة</div>
+              {NAV.slice(4).map(n => (
+                <div key={n.id} className={`nav-item ${page === n.id ? "active" : ""}`} onClick={() => setPage(n.id)}>
+                  <span className="icon">{n.icon}</span>
+                  {n.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="sidebar-footer">
+            <div className="plan-badge">
+              <div className="plan-badge-title">خطتك الحالية</div>
+              <div className="plan-badge-name">💎 Pro Plan</div>
+              <div className="plan-badge-upgrade" onClick={() => setPage("pricing")}>
+                ترقية إلى Business ✦
+              </div>
+            </div>
+            <div className="user-mini">
+              <div className="user-avatar">أ</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="user-name">أحمد المدير</div>
+                <div className="user-email">admin@myshop.com</div>
+              </div>
+              <span style={{ color: "var(--text3)", cursor: "pointer", fontSize: 14 }} onClick={() => setAuthed(false)}>↩</span>
+            </div>
+          </div>
+        </nav>
+
+        {/* MAIN */}
+        <main className="main">
+          <div className="topbar">
+            <div className="topbar-title">{PAGE_TITLES[page]}</div>
+            <div className="topbar-actions">
+              <div className="topbar-btn" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}>
+                {theme === "dark" ? "☀️" : "🌙"}
+              </div>
+              <div className="topbar-btn" style={{ position: "relative" }} onClick={() => setNotifOpen(!notifOpen)}>
+                🔔
+                <div className="notif-dot" />
+              </div>
+              {notifOpen && (
+                <div style={{
+                  position: "absolute", top: 52, left: 20, background: "var(--bg2)",
+                  border: "1px solid var(--border)", borderRadius: 16, padding: 16,
+                  width: 300, boxShadow: "var(--shadow)", zIndex: 200
+                }}>
+                  <div style={{ fontWeight: 700, marginBottom: 12, fontSize: 14 }}>🔔 الإشعارات</div>
+                  {["رسالة جديدة من أحمد محمد", "البوت أجاب على 3 رسائل", "تقرير يومي جاهز"].map((n, i) => (
+                    <div key={i} style={{ padding: "10px 0", borderBottom: "1px solid var(--border)", fontSize: 13, color: "var(--text2)" }}>
+                      • {n}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "var(--accentGlow)", borderRadius: 20, border: "1px solid rgba(37,211,102,0.2)" }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)" }} className="pulse" />
+                <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 600 }}>متصل</span>
+              </div>
+            </div>
+          </div>
+
+          {page === "dashboard" && <Dashboard />}
+          {page === "conversations" && <Conversations />}
+          {page === "bot" && <BotTraining />}
+          {page === "connect" && <WhatsAppConnect />}
+          {page === "pricing" && <Pricing onUpgrade={(plan) => alert(`تم اختيار خطة ${plan}! سيتم التوجيه إلى Stripe...`)} />}
+          {page === "settings" && <Settings />}
+        </main>
+      </div>
+    </>
+  );
+}
